@@ -5,20 +5,28 @@
 
 #define SHARED 1
 
-void *Producer (void *); // the two threads
+void *Producer (void *);
 void *Consumer (void *);
 
 // Semaphores
 sem_t empty;
 sem_t full;
-sem_t mutex;
+pthread_mutex_t mutex;
 // Shared buffer of size = 1
 int data;
+// Shared data of custom size (user input > buffer size)
+// int data_array[];
 // Number of iterations
 int iterations;
 
 // Read command line and create threads
 int main(int argc, char *argv[]) {
+
+    if (argc < 3) {
+	    printf("Usage: boundedBuffer <number of iterations> <buffer size>\n");
+	    printf("Example: ./boundedBuffer 100 10\n");
+	    exit(0);
+    }
 
     // Producers and consumers ids
     pthread_t producer_id_1;
@@ -28,30 +36,31 @@ int main(int argc, char *argv[]) {
     pthread_t consumer_id_2;
     pthread_t consumer_id_3;
 
-    sem_init(&empty, SHARED, 1);  // sem empty = 1
-    sem_init(&full, SHARED, 0);   // sem full = 0
-    sem_init(&mutex, SHARED, 1);  // sem mutex = 1
-
-    if (argc < 3) {
-	    printf("Usage: boundedBuffer <number of iterations> <buffer size>\n");
-	    printf("Example: ./boundedBuffer 100 10\n");
-	    exit(0);
-    }
-
-    iterations = atoi(argv[1]);
+    // Get arguments
+    iterations = atoi(argv[1]);  // Number of iterations
     int buffer_size = atoi(argv[2]);
-    int data_array[buffer_size];
+    int data_array[buffer_size]; // Buffer size (re-define as global?)
+
+    // Init semaphore
+    sem_init(&empty, SHARED, buffer_size);  // Init semaphore empty = 1 (number of empty spaces in buffer)
+    sem_init(&full, SHARED, 0);             // Init semaphore full = 0 (number of items in buffer)
+    pthread_mutex_init(&mutex, NULL);       // Init mutex
 
     // Create producers and consumers
     pthread_create(&producer_id_1, NULL, Producer, NULL);
-//    pthread_create(&producer_id_2, NULL, Producer, NULL);
-//    pthread_create(&producer_id_3, NULL, Producer, NULL);
+    // pthread_create(&producer_id_2, NULL, Producer, NULL);
+    // pthread_create(&producer_id_3, NULL, Producer, NULL);
     pthread_create(&consumer_id_1, NULL, Consumer, NULL);
-//    pthread_create(&consumer_id_2, NULL, Consumer, NULL);
-//    pthread_create(&consumer_id_3, NULL, Consumer, NULL);
+    // pthread_create(&consumer_id_2, NULL, Consumer, NULL);
+    // pthread_create(&consumer_id_3, NULL, Consumer, NULL);
 
     pthread_join(producer_id_1, NULL);
+    // pthread_join(producer_id_2, NULL);
+    // pthread_join(producer_id_3, NULL);
     pthread_join(consumer_id_1, NULL);
+    // pthread_join(consumer_id_2, NULL);
+    // pthread_join(consumer_id_3, NULL);
+
     pthread_exit(0);
 }
 
@@ -61,8 +70,12 @@ void *Producer(void *arg) {
 
     for (produced = 0; produced < iterations; produced++) {
         sem_wait(&empty);
+        // pthread_mutex_lock(&mutex);
+
         data = produced;
         printf(">> Produced %d\n", produced);
+
+        // pthread_mutex_unlock(&mutex);
         sem_post(&full);
     }
 
@@ -75,8 +88,12 @@ void *Consumer(void *arg) {
 
     for (consumed = 0; consumed < iterations; consumed++) {
         sem_wait(&full);
+        //pthread_mutex_lock(&mutex);
+
         total = total + data;
         printf(">> Consumed %d\n", consumed);
+
+        //pthread_mutex_unlock(&mutex);
         sem_post(&empty);
     }
 
