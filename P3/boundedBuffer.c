@@ -15,7 +15,7 @@ pthread_mutex_t mutex;
 // Shared buffer of size = 1
 int data;
 // Shared data of custom size (user input > buffer size)
-// int data_array[];
+// int *data_array;
 // Number of iterations
 int iterations;
 
@@ -39,7 +39,12 @@ int main(int argc, char *argv[]) {
     // Get arguments
     iterations = atoi(argv[1]);  // Number of iterations
     int buffer_size = atoi(argv[2]);
-    int data_array[buffer_size]; // Buffer size (re-define as global?)
+    int data_array[buffer_size]; // Buffer size local variable
+
+//    data_array = (int*)malloc(buffer_size * sizeof(int));
+//    int s = sizeof(data_array) / sizeof(data_array[0]);
+//    printf(">> in %d\n", buffer_size);
+//    printf(">> Size %d\n", s);
 
     // Init semaphore
     sem_init(&empty, SHARED, buffer_size);  // Init semaphore empty = 1 (number of empty spaces in buffer)
@@ -70,12 +75,12 @@ void *Producer(void *arg) {
 
     for (produced = 0; produced < iterations; produced++) {
         sem_wait(&empty);
-        // pthread_mutex_lock(&mutex);
+        pthread_mutex_lock(&mutex);
 
         data = produced;
         printf(">> Produced %d\n", produced);
 
-        // pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&mutex);
         sem_post(&full);
     }
 
@@ -88,12 +93,12 @@ void *Consumer(void *arg) {
 
     for (consumed = 0; consumed < iterations; consumed++) {
         sem_wait(&full);
-        //pthread_mutex_lock(&mutex);
+        pthread_mutex_lock(&mutex);
 
         total = total + data;
         printf(">> Consumed %d\n", consumed);
 
-        //pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&mutex);
         sem_post(&empty);
     }
 
