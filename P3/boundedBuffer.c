@@ -58,18 +58,18 @@ int main(int argc, char *argv[]) {
 
     // Create producers and consumers
     pthread_create(&producer_id_1, NULL, Producer, NULL);
-    pthread_create(&producer_id_2, NULL, Producer, NULL);
-    pthread_create(&producer_id_3, NULL, Producer, NULL);
+    //pthread_create(&producer_id_2, NULL, Producer, NULL);
+    //pthread_create(&producer_id_3, NULL, Producer, NULL);
     pthread_create(&consumer_id_1, NULL, Consumer, NULL);
-    pthread_create(&consumer_id_2, NULL, Consumer, NULL);
-    pthread_create(&consumer_id_3, NULL, Consumer, NULL);
+    //pthread_create(&consumer_id_2, NULL, Consumer, NULL);
+    //pthread_create(&consumer_id_3, NULL, Consumer, NULL);
 
     pthread_join(producer_id_1, NULL);
-    pthread_join(producer_id_2, NULL);
-    pthread_join(producer_id_3, NULL);
+    //pthread_join(producer_id_2, NULL);
+    //pthread_join(producer_id_3, NULL);
     pthread_join(consumer_id_1, NULL);
-    pthread_join(consumer_id_2, NULL);
-    pthread_join(consumer_id_3, NULL);
+    //pthread_join(consumer_id_2, NULL);
+    //pthread_join(consumer_id_3, NULL);
 
     pthread_exit(0);
 }
@@ -79,18 +79,23 @@ void *Producer(void *arg) {
     int produced;
 
     for(produced = 0; produced < iterations; produced++){
-        sem_wait(&empty);
-        pthread_mutex_lock(&mutex);
+        //sem_wait(&empty);
+        //pthread_mutex_lock(&mutex);
 
-        for(int i=0; i<GLOBAL_BUFFER_SIZE; i++){
+        for(int i=0; i < GLOBAL_BUFFER_SIZE; i++){
+            sem_wait(&empty);
+            pthread_mutex_lock(&mutex);
+
             global_data_array[i] = produced;
             printf(">> Produced %d\n", produced);
+
+            pthread_mutex_unlock(&mutex);
+            sem_post(&full);
         }
 
-        pthread_mutex_unlock(&mutex);
-        sem_post(&full);
+        //pthread_mutex_unlock(&mutex);
+        //sem_post(&full);
     }
-
 }
 
 // Fetch iterations items from the buffer and sum them
@@ -99,16 +104,22 @@ void *Consumer(void *arg) {
     int consumed;
 
     for (consumed = 0; consumed < iterations; consumed++) {
-        sem_wait(&full);
-        pthread_mutex_lock(&mutex);
+        //sem_wait(&full);
+        //pthread_mutex_lock(&mutex);
 
-        for(int i=0; i<GLOBAL_BUFFER_SIZE; i++){
+        for(int i=0; i < GLOBAL_BUFFER_SIZE; i++){
+            sem_wait(&full);
+            pthread_mutex_lock(&mutex);
+
             total = total + global_data_array[i];
             printf(">> Consumed %d\n", consumed);
+
+            pthread_mutex_unlock(&mutex);
+            sem_post(&empty);
         }
 
-        pthread_mutex_unlock(&mutex);
-        sem_post(&empty);
+        //pthread_mutex_unlock(&mutex);
+        //sem_post(&empty);
     }
 
     printf("The total number is %d\n", total);
