@@ -16,19 +16,16 @@ pthread_mutex_t mutex;
 // Number of iterations
 int iterations;
 
-// temp hardcoded data
-#define GLOBAL_BUFFER_SIZE 3
-int global_data_array[GLOBAL_BUFFER_SIZE];
-
-// Global data of custom size (user input > buffer size) - not working
-// int *data_array = NULL;
+// Global data array of custom size (user input > buffer size)
+int buffer_size;
+int *data_array = NULL;
 
 // Read command line and create threads
 int main(int argc, char *argv[]) {
 
     if (argc < 3) {
 	    printf("Usage: boundedBuffer <number of iterations> <buffer size>\n");
-	    printf("Example: ./boundedBuffer 100 10\n");
+	    printf("Example: ./boundedBuffer 100 3\n");
 	    exit(0);
     }
 
@@ -42,17 +39,15 @@ int main(int argc, char *argv[]) {
 
     // Get arguments
     iterations = atoi(argv[1]);  // Number of iterations
-    // int buffer_size = atoi(argv[2]);
-    // int data_array[buffer_size]; // Buffer size local variable
 
-    // Global buffer size array definition (not working)
-    // data_array = (int*)malloc(buffer_size * sizeof(int));
-    // int s = sizeof(data_array) / sizeof(data_array[0]);
-    // printf(">> in %d\n", buffer_size);
-    // printf(">> Size %d\n", s);
+    // Global buffer size array definition
+    buffer_size = atoi(argv[2]);
+    data_array = (int*)malloc(buffer_size * sizeof(int));
+
+    printf("Running program with %d iterations with buffer of size %d\n", iterations, buffer_size);
 
     // Init semaphore
-    sem_init(&empty, SHARED, GLOBAL_BUFFER_SIZE);   // Init semaphore empty = 1 (number of empty spaces in buffer)
+    sem_init(&empty, SHARED, buffer_size);          // Init semaphore empty = 1 (number of empty spaces in buffer)
     sem_init(&full, SHARED, 0);                     // Init semaphore full = 0 (number of items in buffer)
     pthread_mutex_init(&mutex, NULL);               // Init mutex
 
@@ -74,52 +69,39 @@ int main(int argc, char *argv[]) {
     pthread_exit(0);
 }
 
+
 // Deposit n iterations into the data buffer
 void *Producer(void *arg) {
     int produced;
 
+    // int i=0; i < GLOBAL_BUFFER_SIZE; i++
     for(produced = 0; produced < iterations; produced++){
-        //sem_wait(&empty);
-        //pthread_mutex_lock(&mutex);
+        sem_wait(&empty);
+        pthread_mutex_lock(&mutex);
 
-        for(int i=0; i < GLOBAL_BUFFER_SIZE; i++){
-            sem_wait(&empty);
-            pthread_mutex_lock(&mutex);
+        data_array[produced%buffer_size] = produced;
+        printf(">> Produced %d\n", produced);
 
-            global_data_array[i] = produced;
-            printf(">> Produced %d\n", produced);
-
-            pthread_mutex_unlock(&mutex);
-            sem_post(&full);
-        }
-
-        //pthread_mutex_unlock(&mutex);
-        //sem_post(&full);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&full);
     }
 }
+
 
 // Fetch iterations items from the buffer and sum them
 void *Consumer(void *arg) {
     int total = 0;
     int consumed;
 
-    for (consumed = 0; consumed < iterations; consumed++) {
-        //sem_wait(&full);
-        //pthread_mutex_lock(&mutex);
+    for(consumed = 0; consumed < iterations; consumed++){
+        sem_wait(&full);
+        pthread_mutex_lock(&mutex);
 
-        for(int i=0; i < GLOBAL_BUFFER_SIZE; i++){
-            sem_wait(&full);
-            pthread_mutex_lock(&mutex);
+        total = total + data_array[consumed%buffer_size];
+        printf(">> Consumed %d\n", consumed);
 
-            total = total + global_data_array[i];
-            printf(">> Consumed %d\n", consumed);
-
-            pthread_mutex_unlock(&mutex);
-            sem_post(&empty);
-        }
-
-        //pthread_mutex_unlock(&mutex);
-        //sem_post(&empty);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&empty);
     }
 
     printf("The total number is %d\n", total);
