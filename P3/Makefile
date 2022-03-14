@@ -3,7 +3,7 @@ LDFLAGS= -lpthread -lrt
 LDFLAGS1= -lpthread
 CC=g++
 
-all: boundedBuffer condvar1 profStud
+all: boundedBuffer condvar1 profStud oneLane
 
 # To make an executable
 boundedBuffer: boundedBuffer.o 
@@ -14,6 +14,9 @@ condvar1: condvar1.o
 
 profStud: profStud.o
 	$(CC) -o profStud profStud.o $(LDFLAGS1)
+
+oneLane: oneLane.o
+	$(CC) -o oneLane oneLane.o $(LDFLAGS1)
  
 # To make an object from source
 .c.o:
@@ -21,5 +24,5 @@ profStud: profStud.o
 
 # clean out the dross
 clean:
-	-rm boundedBuffer condvar1 profStud *.o
+	-rm boundedBuffer condvar1 profStud oneLane *.o
 
