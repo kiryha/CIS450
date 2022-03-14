@@ -104,5 +104,5 @@ void *Consumer(void *arg) {
         sem_post(&empty);
     }
 
-    printf("The total number is %d\n", total);
+    printf("The TOTAL number is %d\n", total);
 }
