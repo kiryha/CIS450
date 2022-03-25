@@ -116,6 +116,8 @@ int main(int argc, char *argv[])
         int before_index = find_index_of_pid(before.pid, before.num_processes, active_pids[i]);
         int after_index = find_index_of_pid(after.pid, after.num_processes, active_pids[i]);
 
+	//printf(1, "PID = %d, before index [%d]; after index [%d]\n", active_pids[i], before_index, after_index);
+
         if (before_index == -1)
             printf(2, "child %d did not exist for getprocessesinfo before parent slept\n", i);
         if (after_index == -1)
@@ -129,6 +131,8 @@ int main(int argc, char *argv[])
             if (after.tickets[after_index] != tickets_for[i]) {
                 printf(2, "child %d had wrong number of tickets in getpinfo after parent slept\n", i);
             }
+	    //printf(1, "PID = %d, before index [%d]; after index [%d]\n", active_pids[i], before.tickets[before_index], 
+	//		    after.tickets[after_index]);
             printf(1, "%d\t%d\n", tickets_for[i], after.ticks[after_index] - before.ticks[before_index]);
         }
     }
