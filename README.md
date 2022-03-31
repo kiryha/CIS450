@@ -36,6 +36,8 @@ extern int sys_yield(void);
 [SYS_getpinfo]     sys_getpinfo,
 [SYS_yield]        sys_yield,
 
+delete sys_date related lines!
+
 6) Edit sysproc.c file, add:
 
 extern int settickets(int);

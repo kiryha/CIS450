@@ -94,6 +94,7 @@ sys_uptime(void)
   return xticks;
 }
 
+// Lottery Scheduler implementation
 int
 sys_settickets(void){
   int tickets;
@@ -106,12 +107,10 @@ sys_getpinfo(void){
   struct pstat* p;
   if (argptr(0,(void*)&p,sizeof(struct pstat*)) < 0) return -1;
   return getpinfo(p);
-
 }
 
 int
 sys_yield(void){
   yield();
   return 0;
-
 }

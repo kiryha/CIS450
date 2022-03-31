@@ -206,8 +206,9 @@ fork(void)
   np->parent = curproc;
   *np->tf = *curproc->tf;
 
-  np->tickets = curproc->tickets; // inherit tickets from parent
-  np->ticks = 0; // restart ticks for child
+ // Inherit tickets from parent and restart ticks for child
+  np->tickets = curproc->tickets;
+  np->ticks = 0;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -340,30 +341,32 @@ scheduler(void)
   cmostime(&r);
   srand(r.second);
   
-  int tot_tickets = 0;
-  unsigned int rando = rand() % (tot_tickets+1);
+  int total_tickets = 0;
+  unsigned int rando = rand() % (total_tickets+1);
 
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     acquire(&ptable.lock);
-    // loop thru ptable to tally up total # tickets
-    int tot_tickets = 0;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+
+    // Count total number of tickets
+    int total_tickets = 0;
+    for(p=ptable.proc; p<&ptable.proc[NPROC]; p++){
+
       if(p->state != RUNNABLE)
         continue;
       
-      tot_tickets += p->tickets;
+      total_tickets += p->tickets;
     }
 
-    // loop again to choose a lotto winner
+    // Choose winner
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
       
-      //if random(0 to tot_tix) < p->tix... WINNER FOUND!!
-      rando = rand() % (tot_tickets+1);
+      // Define winner if random number 0 to total tickets less p->tickets
+      rando = rand() % (total_tickets+1);
       if (rando >= p->tickets)
         continue;
       
